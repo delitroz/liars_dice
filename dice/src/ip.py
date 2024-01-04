@@ -7,6 +7,13 @@ from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
 
 
+def rgb2gray_uint8(img):
+
+    gray = rgb2gray(img)
+    gray = (gray * 255).astype(np.uint8)
+
+    return gray
+
 def normalize_uint8(img):
     """Normalize image"""
 
@@ -46,7 +53,7 @@ class Dice():
         if value is not None:
             self.value = value
         else:
-            gray = rgb2gray(self.img)
+            gray = rgb2gray_uint8(self.img)
             norm = normalize_uint8(gray)
             bin = otsu_uint8(norm)
             inv = invert_uint8(bin)
@@ -69,7 +76,7 @@ class Dice():
 
 def detect_dices(frame):
     
-    gray = rgb2gray(frame)
+    gray = rgb2gray_uint8(frame)
     norm = normalize_uint8(gray)
     bin = otsu_uint8(norm)
     cleared = clear_border(bin)

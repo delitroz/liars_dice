@@ -3,15 +3,15 @@ import cv2
 import collections
 import time
 
-import warnings
-warnings.filterwarnings("ignore")
-
+from src.camera_utils import select_camera
 from src.ip import detect_dices, dices_bboxes_overlay
 from src.gameplay import Player, get_all_dices
 
 
-
 if __name__ == "__main__":
+
+    camera = select_camera()
+    cv2.destroyAllWindows()   # Necessary otherwise the window for camera selection don't go away
 
     nb_dices = 5
     player = Player(name="you")
@@ -27,7 +27,8 @@ if __name__ == "__main__":
         cpu.roll_dices(nb_dices)
 
         # Player roll the dices
-        cap = cv2.VideoCapture(0)
+        print("\nRoll your dices!")
+        cap = cv2.VideoCapture(camera)
         dices_tmp = {
             "time": time.time(),
             "values": [],
@@ -56,15 +57,17 @@ if __name__ == "__main__":
                         ):
                             player.set_dices(dices)
                             break
+                            
+
                         else:
                             dices_tmp["time"] = frame_time
                             dices_tmp["values"] = dices
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
+
         cap.release()
 
-        print("")
         player.print_roll()
         print("")
         player.bet(2 * nb_dices)
