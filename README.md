@@ -1,5 +1,6 @@
-# python_webcam_tests
-Having some fun with real-time webcam feed processing in python
+# Liar's dice
+Having some fun with real-time webcam feed processing in python by implementing
+a game of liar's dice where the user plays their dice on a webcam feed.
 
 
 ## Installation
