@@ -5,7 +5,7 @@ import time
 
 from src.camera_utils import select_camera
 from src.ip import detect_dices, dices_bboxes_overlay
-from src.gameplay import Player, get_all_dices
+from src.gameplay import HumanPlayer, RobotPlayer, get_all_dices
 
 
 if __name__ == "__main__":
@@ -14,8 +14,8 @@ if __name__ == "__main__":
     cv2.destroyAllWindows()   # Necessary otherwise the window for camera selection don't go away
 
     nb_dices = 5
-    player = Player(name="you")
-    cpu = Player(name="cpu")
+    player = HumanPlayer(name="you")
+    cpu = RobotPlayer(name="cpu")
 
     round = 1
     while(True):
@@ -25,48 +25,8 @@ if __name__ == "__main__":
         cpu.reset()
 
         cpu.roll_dices(nb_dices)
-
-        # Player roll the dices
-        print("\nRoll your dices!")
-        cap = cv2.VideoCapture(camera)
-        dices_tmp = {
-            "time": time.time(),
-            "values": [],
-        }
-        while(True):
-            ret, frame = cap.read()
-            obj_lst = detect_dices(frame)
-            overlay = dices_bboxes_overlay(frame, obj_lst)
-            cv2.imshow("", overlay)
-
-            dices = [o.value for o in obj_lst]
-            nb_played_dices = len(dices)
-
-            if (nb_played_dices != 0) & (nb_played_dices == nb_dices):
-                frame_time = time.time()
-
-                if dices_tmp["values"] == []:
-                    dices_tmp["time"] = frame_time
-                    dices_tmp["values"] = dices
-
-                # validate the throw when values are stable for 1 second
-                else:
-                    if frame_time - dices_tmp["time"] >= 1:
-                        if (
-                            collections.Counter(dices) == collections.Counter(dices_tmp["values"])
-                        ):
-                            player.set_dices(dices)
-                            break
-                            
-
-                        else:
-                            dices_tmp["time"] = frame_time
-                            dices_tmp["values"] = dices
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-        cap.release()
+        player.roll_dices_camera(nb_dices, camera)
+        
 
         player.print_roll()
         print("")
