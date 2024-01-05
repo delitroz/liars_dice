@@ -220,10 +220,10 @@ class Game:
         ]
         self.all_players = [self.human_player] + self.cpu_players
         self.nb_players = len(self.all_players)
-
         self.total_nb_dice = nb_dices * self.nb_players
-
-        print(f"\nStarting a new game with {nb_cpus} opponents")
+        print(
+            f"\nStarting a new game of {self.nb_players} players with {nb_dices} dices each."
+        )
 
     def bid_round(self):
         """Plays a round of bidding.
@@ -271,7 +271,6 @@ class Game:
         Returns:
             object Player: Looser of the bidding round
         """
-
         all_dices = np.concatenate([p.dices_values for p in self.all_players], axis=0)
         bid_value_occurences = np.count_nonzero(all_dices == bid.value)
         time.sleep(0.5)
@@ -295,6 +294,9 @@ class Game:
     def play_round(self):
         """Plays a full round"""
         print(f"\n\n---------- Round {self.round} ----------")
+        print(f"{self.total_nb_dice} dices are still in the game.")
+        for p in self.all_players:
+            print(f"   {p.name} has {p.nb_dices} left.")
 
         # all players roll their dices
         self.human_player.roll_dices()
