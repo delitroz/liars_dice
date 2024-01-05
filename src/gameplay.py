@@ -221,8 +221,9 @@ class Game:
         self.all_players = [self.human_player] + self.cpu_players
         self.nb_players = len(self.all_players)
         self.total_nb_dice = nb_dices * self.nb_players
-        print(f"\nStarting a new game of {self.nb_players} players with {nb_dices} dices each.")
-
+        print(
+            f"\nStarting a new game of {self.nb_players} players with {nb_dices} dices each."
+        )
 
     def bid_round(self):
         """Plays a round of bidding.
@@ -259,7 +260,6 @@ class Game:
 
         return last_bid
 
-
     def check_bid(self, bid):
         """Check if a bid is valid and return the the looser. If the bid
         is valid, the looser is the player that challenged it, if not, the looser
@@ -290,7 +290,6 @@ class Game:
         looser_name = bid.challenged_by if bid_valid else bid.player_name
 
         return next((p for p in self.all_players if p.name == looser_name))
-
 
     def play_round(self):
         """Plays a full round"""
@@ -331,7 +330,6 @@ class Game:
         looser.remove_dice()
         self.total_nb_dice -= 1
         self.round += 1
-
 
     def play(self):
         """Plays the game"""
