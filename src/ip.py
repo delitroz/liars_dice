@@ -8,6 +8,14 @@ from skimage.measure import label, regionprops
 
 
 def rgb2gray_uint8(img):
+    """Converts RGB image to 8bit grayscale
+
+    Args:
+        img (ndarray): RGB image
+
+    Returns:
+        ndarray: grayscale image
+    """
 
     gray = rgb2gray(img)
     gray = (gray * 255).astype(np.uint8)
@@ -15,7 +23,14 @@ def rgb2gray_uint8(img):
     return gray
 
 def normalize_uint8(img):
-    """Normalize image"""
+    """Normalizes an image and return as 8bit.
+
+    Args:
+        img (ndarray): Input image
+
+    Returns:
+        ndarray: Normalized image
+    """
 
     im = np.copy(img).astype(np.float32)
     norm_im = (img - np.min(im)) / (np.max(im) - np.min(im))
@@ -25,6 +40,15 @@ def normalize_uint8(img):
 
 
 def otsu_uint8(img):
+    """Applies Otsu's thresholding to an image. Returns a
+    binary image encoded in 8bit with values [0, 255].
+
+    Args:
+        img (ndarray): Input image
+
+    Returns:
+        ndarray: Binarized image
+    """
     t = threshold_otsu(img)
     retval = np.zeros_like(img).astype(np.uint8)
     retval[img > t] = 255
@@ -32,6 +56,14 @@ def otsu_uint8(img):
 
 
 def invert_uint8(img):
+    """Inverts binary image encoded in 8bit with values [0, 255].
+
+    Args:
+        img (ndarray): Input image
+
+    Returns:
+        ndarray: Inverted image
+    """
     retval = np.zeros_like(img)
     retval[img == 0] = 255
     return retval
@@ -40,6 +72,14 @@ def invert_uint8(img):
 class Dice():
 
     def __init__(self, in_img, center, bbox, value=None):
+        """Constructor for the Dice class
+
+        Args:
+            in_img (ndarray): Input image
+            center (tupple(int)): Center coordinates (x,y)
+            bbox (tupple(int)): Bounding box coordinates (top, left, bottom, right)
+            value (int, optional): Value of the dice. Defaults to None.
+        """
 
         self.center = center
         self.bbox = bbox
@@ -64,6 +104,14 @@ class Dice():
 
     
     def get_bbox_mask(self, in_img):
+        """Returns a mask of the dice's bounding box
+
+        Args:
+            in_img (ndarray): input image
+
+        Returns:
+            ndarray: mask
+        """
 
         mask = np.zeros_like(in_img, dtype=np.uint8)
         mask[self.bbox[0]:self.bbox[2], self.bbox[1]] = self.bbox_color
@@ -75,7 +123,14 @@ class Dice():
 
 
 def detect_dices(frame):
-    
+    """Dice detection pipeline.
+
+    Args:
+        frame (ndarray): Current frame
+
+    Returns:
+        lst[Dice]: list of Dices found on the frame
+    """
     gray = rgb2gray_uint8(frame)
     norm = normalize_uint8(gray)
     bin = otsu_uint8(norm)
@@ -98,7 +153,16 @@ def detect_dices(frame):
 
 
 def dices_bboxes_overlay(frame, obj_lst):
-    
+    """Generates an overaly displaying the bounding box and value of
+    each dice detected on the current frame.
+
+    Args:
+        frame (ndarray): Current frame
+        obj_lst (list[Dice]): List of dices detected on the frame
+
+    Returns:
+        ndarray: Ouput image
+    """
     if len(obj_lst) == 0:
         overlayed = frame.copy()
     else:

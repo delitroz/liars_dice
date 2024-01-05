@@ -7,9 +7,8 @@ from src.ip import *
 
 if __name__ == "__main__":
 
-    camera = 0
-    # camera = select_camera()
-    # cv2.destroyAllWindows()   # Necessary otherwise the window for camera selection don't go away
+    camera = select_camera()
+    cv2.destroyAllWindows()   # Necessary otherwise the window for camera selection don't go away
 
     cap = cv2.VideoCapture(camera)
 
