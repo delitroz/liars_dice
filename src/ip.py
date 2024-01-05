@@ -22,6 +22,7 @@ def rgb2gray_uint8(img):
 
     return gray
 
+
 def normalize_uint8(img):
     """Normalizes an image and return as 8bit.
 
@@ -69,8 +70,7 @@ def invert_uint8(img):
     return retval
 
 
-class Dice():
-
+class Dice:
     def __init__(self, in_img, center, bbox, value=None):
         """Constructor for the Dice class
 
@@ -85,10 +85,7 @@ class Dice():
         self.bbox = bbox
         self.bbox_color = [0, 0, 255]
 
-        self.img = in_img[
-            self.bbox[0]:self.bbox[2],
-            self.bbox[1]:self.bbox[3]
-        ]
+        self.img = in_img[self.bbox[0] : self.bbox[2], self.bbox[1] : self.bbox[3]]
 
         if value is not None:
             self.value = value
@@ -102,7 +99,6 @@ class Dice():
 
             self.value = len(np.unique(label_image)) - 1
 
-    
     def get_bbox_mask(self, in_img):
         """Returns a mask of the dice's bounding box
 
@@ -114,10 +110,10 @@ class Dice():
         """
 
         mask = np.zeros_like(in_img, dtype=np.uint8)
-        mask[self.bbox[0]:self.bbox[2], self.bbox[1]] = self.bbox_color
-        mask[self.bbox[0]:self.bbox[2], self.bbox[3]] = self.bbox_color
-        mask[self.bbox[0], self.bbox[1]:self.bbox[3]] = self.bbox_color
-        mask[self.bbox[2], self.bbox[1]:self.bbox[3]] = self.bbox_color
+        mask[self.bbox[0] : self.bbox[2], self.bbox[1]] = self.bbox_color
+        mask[self.bbox[0] : self.bbox[2], self.bbox[3]] = self.bbox_color
+        mask[self.bbox[0], self.bbox[1] : self.bbox[3]] = self.bbox_color
+        mask[self.bbox[2], self.bbox[1] : self.bbox[3]] = self.bbox_color
 
         return mask
 
@@ -173,7 +169,7 @@ def dices_bboxes_overlay(frame, obj_lst):
                     alpha=1,
                     src2=obj.get_bbox_mask(frame),
                     beta=0.5,
-                    gamma=0
+                    gamma=0,
                 )
             else:
                 overlayed = cv2.addWeighted(
@@ -181,16 +177,16 @@ def dices_bboxes_overlay(frame, obj_lst):
                     alpha=1,
                     src2=obj.get_bbox_mask(frame),
                     beta=0.5,
-                    gamma=0
+                    gamma=0,
                 )
-            
+
             cv2.putText(
                 img=overlayed,
                 text=str(obj.value),
-                org=(obj.bbox[1], obj.bbox[0]-10),
+                org=(obj.bbox[1], obj.bbox[0] - 10),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.75,
-                color=(0,0,255),
+                color=(0, 0, 255),
                 thickness=1,
                 bottomLeftOrigin=False,
             )

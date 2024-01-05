@@ -8,11 +8,11 @@ from src.ip import *
 if __name__ == "__main__":
 
     camera = select_camera()
-    cv2.destroyAllWindows()   # Necessary otherwise the window for camera selection don't go away
+    cv2.destroyAllWindows()  # Necessary otherwise the window for camera selection don't go away
 
     cap = cv2.VideoCapture(camera)
 
-    while(True):
+    while True:
 
         ret, frame = cap.read()
 
@@ -47,10 +47,34 @@ if __name__ == "__main__":
         overlay = dices_bboxes_overlay(frame, obj_lst)
 
         # Display everything on a big image
-        gray_disp = np.stack([gray, ] * 3, axis=2)
-        cleared_disp = np.stack([cleared, ] * 3, axis=2)
-        norm_disp = np.stack([norm, ] * 3, axis=2)
-        bin_disp = np.stack([bin, ] * 3, axis=2)
+        gray_disp = np.stack(
+            [
+                gray,
+            ]
+            * 3,
+            axis=2,
+        )
+        cleared_disp = np.stack(
+            [
+                cleared,
+            ]
+            * 3,
+            axis=2,
+        )
+        norm_disp = np.stack(
+            [
+                norm,
+            ]
+            * 3,
+            axis=2,
+        )
+        bin_disp = np.stack(
+            [
+                bin,
+            ]
+            * 3,
+            axis=2,
+        )
 
         row1 = np.concatenate([frame, gray_disp, norm_disp], axis=1)
         row2 = np.concatenate([bin_disp, cleared_disp, overlay], axis=1)
