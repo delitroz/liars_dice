@@ -6,6 +6,7 @@ a game of liar's dice where the user plays their dice on a webcam feed.
 ## Installation
 
 ```
-conda create -n python_webcam_tests python=3.11
+conda create -n liars_dice python=3.11
+conda activate liars_dice
 pip install -r requirements.txt
 ```
