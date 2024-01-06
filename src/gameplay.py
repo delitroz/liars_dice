@@ -10,7 +10,9 @@ def ask_player_name():
         str: Player's name
     """
     print("")
-    return input("What's your name?   ")
+    player_name = input("What's your name? ")
+    time.sleep(0.5)
+    return player_name
 
 
 def ask_nb_cpus():
@@ -19,7 +21,6 @@ def ask_nb_cpus():
     Returns:
         int: Number of opponents
     """
-    time.sleep(0.5)
     print("")
     while True:
         try:
@@ -30,22 +31,22 @@ def ask_nb_cpus():
                 print("Invalid input. Please enter a number between 1 and 4.")
         except ValueError:
             print("Invalid input. Please enter a number.")
-
+    time.sleep(0.5)
     return nb_cpus
 
 
 class Bid:
-    def __init__(self, player_name, occurence, value, challenged_by):
+    def __init__(self, player_name, count, value, challenged_by):
         """Constructor of the bid class.
 
         Args:
             player_name (str): Name of the player placing the bid
-            occurence (int): Occurence of a particular value on all dices
+            count (int): Count of a particular value on all dices
             value (int): Dice value
             challenged_by (str): Name of the player challenging this bid
         """
         self.player_name = player_name
-        self.occurence = occurence
+        self.count = count
         self.value = value
         self.challenged_by = challenged_by
 
@@ -68,17 +69,17 @@ class Player:
 
     def disclose_dices(self):
         """Prints the values of the dices rolled"""
-        time.sleep(0.5)
         print(f"{self.name} rolled: {self.dices_values}")
+        time.sleep(0.5)
 
     def remove_dice(self):
         """Removes a dice from the player"""
-        time.sleep(0.5)
         if self.nb_dices > 0:
             self.nb_dices -= 1
             print(f"\n{self.name} lost a dice and has now {self.nb_dices} left")
         else:
             print(f"\n{self.name} has no dices left and was eliminated!")
+        time.sleep(0.5)
 
 
 class HumanPlayer(Player):
@@ -91,59 +92,65 @@ class HumanPlayer(Player):
         """
         super().__init__(name, nb_dices)
 
-    def challenge_last_bid(self, last_bid):
+    def challenge_last_bid(self, last_bid, total_nb_dices):
         """Asks the player if they want to challenge the last bid. If yes
         update the last bid "challenged_by" argument to the player's name.
 
         Args:
-            last_bid (object Bid): Last bid
+            last_bid (Bid): Last bid
+            total_nb_dices (int): Always unused. Only for consitency with
+                CpuPlayer counterpart
 
         Returns:
             obect Bid: Updated last bid
         """
+        while True:
+            challenge = input("Challenge the last bid? (y/n): ")
+            if challenge == "y":
+                last_bid.challenged_by = self.name
+                break
+            elif challenge == "n":
+                break
+            else:
+                print(f"   Invalid input: should be 'y' or 'n'")
         time.sleep(0.5)
-        challenge = input("Challenge the last bid? (y/n): ")
-        if challenge == "y":
-            last_bid.challenged_by = self.name
         return last_bid
 
-    def place_bid(self, last_bid):
+    def place_bid(self, last_bid, total_nb_dice):
         """Asks the player which bid they want to place. Update the last bid
         accordingly.
 
         Args:
             last_bid (object Bid): Last bid
+            total_nb_dices (int): Always unused. Only for consitency with
+                CpuPlayer counterpart
 
         Returns:
             object Bid: Updated Bid
         """
-        while True:
-            time.sleep(0.5)
-            s = input("Place your bid! (int:occurences int:value): ")
-            parts = s.split()
 
+        bid = Bid(player_name=self.name, count=0, value=0, challenged_by=None)
+
+        while True:
+            s = input("Place your bid! (count value): ")
+            parts = s.split()
             # check valid format
             if len(parts) != 2 or not all(part.isdigit() for part in parts):
-                print("Error: Input bid be two integers separated by a space.")
+                print("   Invalid input: should be two integers separated by a space.")
             else:
-                occurence, value = map(int, parts)
-                if not 1 <= value <= 6:
-                    print("Error: The value must be between 1 and 6.")
+                count, value = map(int, parts)
+                if (
+                    (count > last_bid.count and value == last_bid.value)
+                    or (count == last_bid.count and value > last_bid.value)
+                    or (count > last_bid.count and value > last_bid.value)
+                ):
+                    bid.count = count
+                    bid.value = value
+                    break
                 else:
-                    # check if bid raised
-                    if (
-                        (occurence > last_bid.occurence and value == last_bid.value)
-                        or (occurence == last_bid.occurence and value > last_bid.value)
-                        or (occurence > last_bid.occurence and value > last_bid.value)
-                    ):
-                        last_bid.player_name = self.name
-                        last_bid.occurence = occurence
-                        last_bid.value = value
-                        break
-                    else:
-                        print(f"You have to raise the bid!")
-
-        return last_bid
+                    print(f"   Invalid input: You have to raise the bid!")
+        time.sleep(0.5)
+        return bid
 
 
 class CpuPlayer(Player):
@@ -171,7 +178,11 @@ class CpuPlayer(Player):
 
         rand = random.uniform(0, 1)
         p = 0.1
-        if (rand < p) or (last_bid.occurence > total_nb_dice):
+        if (
+            (rand < p)
+            or (last_bid.count > total_nb_dice)
+            or not (1 <= last_bid.value <= 6)
+        ):
             last_bid.challenged_by = self.name
 
         return last_bid
@@ -187,20 +198,38 @@ class CpuPlayer(Player):
         Returns:
             object Bid: Updated last bid
         """
-        last_bid.player_name = self.name
-        if last_bid.value == 6:
-            last_bid.occurence += 1
-        else:
-            rand = random.uniform(0, 1)
-            p = 0.5
-            last_bid.player_name = self.name
-            if rand < p:
-                last_bid.occurence += 1
+
+        bid = Bid(
+            player_name=self.name,
+            count=0,
+            value=0,
+            challenged_by=None,
+        )
+
+        if last_bid.player_name is not None:
+            if last_bid.value == 6:
+                bid.count = last_bid.count + 1
+                bid.value = last_bid.value
             else:
-                last_bid.value += 1
+                rand = random.uniform(0, 1)
+                p = 0.5
+                if rand < p:
+                    bid.count = last_bid.count + 1
+                    bid.value = last_bid.value
+                else:
+                    bid.count = last_bid.count
+                    bid.value = last_bid.value + 1
+            print(f"{self.name} raised the bid to {bid.count} {bid.value}")
+
+        else:
+            bid.count = random.randint(2, 4)
+            bid.value = random.randint(1, 6)
+
+            print(f"{self.name} placed a first bid of {bid.count} {bid.value}")
+
         time.sleep(0.5)
-        print(f"{self.name} raised the bid to {last_bid.occurence} {last_bid.value}")
-        return last_bid
+
+        return bid
 
 
 class Game:
@@ -224,36 +253,29 @@ class Game:
         print(
             f"\nStarting a new game of {self.nb_players} players with {nb_dices} dices each."
         )
+        time.sleep(0.5)
 
-    def bid_round(self):
+    def play_bid_round(self):
         """Plays a round of bidding.
 
         Returns:
             object Bid: Last bid made in the round
         """
-        bid_round = 1
-        last_bid = Bid(
-            player_name="nobody", occurence=0, value=0, challenged_by="nobody"
-        )
+        bid_round = 0
+        last_bid = Bid(player_name=None, count=0, value=0, challenged_by=None)
 
         while True:
-            if bid_round == 1:  # no challenge allowed for first player
-                last_bid = self.human_player.place_bid(last_bid)
-            else:
-                last_bid = self.human_player.challenge_last_bid(last_bid)
-                if last_bid.challenged_by != "nobody":
-                    break
-                else:
-                    last_bid = self.human_player.place_bid(last_bid)
-
-            for p in self.cpu_players:
-                last_bid = p.challenge_last_bid(last_bid, self.total_nb_dice)
-                if last_bid.challenged_by != "nobody":
-                    break
-                else:
+            for i, p in enumerate(self.all_players):
+                if (i == 0) and (bid_round == 0):
                     last_bid = p.place_bid(last_bid, self.total_nb_dice)
+                else:
+                    last_bid = p.challenge_last_bid(last_bid, self.total_nb_dice)
+                    if last_bid.challenged_by is not None:
+                        break
+                    else:
+                        last_bid = p.place_bid(last_bid, self.total_nb_dice)
 
-            if last_bid.challenged_by != "nobody":
+            if last_bid.challenged_by is not None:
                 break
 
             bid_round += 1
@@ -272,12 +294,13 @@ class Game:
             object Player: Looser of the bidding round
         """
         all_dices = np.concatenate([p.dices_values for p in self.all_players], axis=0)
-        bid_value_occurences = np.count_nonzero(all_dices == bid.value)
-        time.sleep(0.5)
-        print("")
-        print(f"There are {bid_value_occurences} {bid.value}s on the table")
+        bid_value_count = np.count_nonzero(all_dices == bid.value)
 
-        bid_valid = bid_value_occurences == bid.occurence
+        print("")
+        print(f"There are {bid_value_count} {bid.value}s on the table")
+        time.sleep(0.25)
+
+        bid_valid = bid_value_count == bid.count
         if bid_valid:
             print(
                 f"{bid.challenged_by} shouldn't have challenged {bid.player_name}'s bid!"
@@ -286,17 +309,20 @@ class Game:
             print(
                 f"{bid.challenged_by} was right to challenge {bid.player_name}'s bid!"
             )
+        time.sleep(0.5)
 
         looser_name = bid.challenged_by if bid_valid else bid.player_name
+        looser = next((p for p in self.all_players if p.name == looser_name))
 
-        return next((p for p in self.all_players if p.name == looser_name))
+        return looser
 
     def play_round(self):
         """Plays a full round"""
         print(f"\n\n---------- Round {self.round} ----------")
-        print(f"{self.total_nb_dice} dices are still in the game.")
+        print(f"\n{self.total_nb_dice} dices are still in the game.")
         for p in self.all_players:
             print(f"   {p.name} has {p.nb_dices} left.")
+        time.sleep(0.5)
 
         # all players roll their dices
         self.human_player.roll_dices()
@@ -304,41 +330,48 @@ class Game:
             p.roll_dices()
 
         # player have their roll presented to them
-        time.sleep(0.5)
         print("")
         self.human_player.disclose_dices()
 
         # bid time!
         print("")
-        last_bid = self.bid_round()
-        time.sleep(0.5)
+        last_bid = self.play_bid_round()
         print(
-            f"\n{last_bid.challenged_by} challenged {last_bid.player_name}'s last bid of {last_bid.occurence} {last_bid.value}!"
+            f"\n{last_bid.challenged_by} challenged {last_bid.player_name}'s last bid of {last_bid.count} {last_bid.value}!"
         )
+        time.sleep(0.5)
 
         # all dices are revealed
-        time.sleep(0.5)
         print("")
         self.human_player.disclose_dices()
         for p in self.cpu_players:
             p.disclose_dices()
+        time.sleep(0.5)
 
         # get the looser of the bid round
         looser = self.check_bid(last_bid)
 
-        # remove a dice from the looser
-        looser.remove_dice()
-        self.total_nb_dice -= 1
         self.round += 1
+
+        return looser
 
     def play(self):
         """Plays the game"""
         while True:
-            self.play_round()
+            looser = self.play_round()
+
+            # reorder players for next round (looser starts first)
+            looser_idx = self.all_players.index(looser)
+            self.all_players = (
+                self.all_players[looser_idx:] + self.all_players[:looser_idx]
+            )
+
+            # remove a dice from the looser
+            looser.remove_dice()
+            self.total_nb_dice -= 1
 
             # end game if player has 0 dice
             if self.human_player.nb_dices == 0:
-                time.sleep(0.5)
                 print(f"\n{self.human_player.name} has no dice left.\nGame over\n")
                 break
 
@@ -351,6 +384,10 @@ class Game:
 
             # end game if no cpu players remaining
             if len(self.cpu_players) == 0:
-                time.sleep(0.5)
                 print(f"\nNo cpu players remaining.\n{self.human_player.name} won!\n")
                 break
+
+            time.sleep(0.5)
+            while True:
+                if input(f"\nPress Enter to continue   ") is not None:
+                    break
