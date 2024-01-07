@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # nb_cpus = ask_nb_cpus()
     nb_cpus = 4
 
-    nb_dices = 3
+    nb_dices = 5
 
     game = Game(player_name, nb_cpus, nb_dices)
     game.play()

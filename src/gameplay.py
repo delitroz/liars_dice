@@ -2,6 +2,8 @@ import numpy as np
 import random
 import time
 
+from scipy.stats import binom
+
 
 def ask_player_name():
     """Asks the player for their name.
@@ -116,17 +118,17 @@ class HumanPlayer(Player):
         time.sleep(0.5)
         return last_bid
 
-    def place_bid(self, last_bid, total_nb_dice):
+    def place_bid(self, last_bid, total_nb_dices):
         """Asks the player which bid they want to place. Update the last bid
         accordingly.
 
         Args:
-            last_bid (object Bid): Last bid
+            last_bid (Bid): Last bid
             total_nb_dices (int): Always unused. Only for consitency with
                 CpuPlayer counterpart
 
         Returns:
-            object Bid: Updated Bid
+            Bid: Updated Bid
         """
 
         bid = Bid(player_name=self.name, count=0, value=0, challenged_by=None)
@@ -163,69 +165,163 @@ class CpuPlayer(Player):
         """
         super().__init__(name, nb_dices)
 
-    # TODO improve AI
-    def challenge_last_bid(self, last_bid, total_nb_dice):
+    def compute_bid_proba(self, bid, total_nb_dices):
+        """Compute the probability that a bid is valid.
+
+        Args:
+            bid (Bid): Bid
+            total_nb_dices (int): Total number of dices in the game
+        """
+        bid_value_own_count = np.count_nonzero(self.dices_values == bid.value)
+        bid_value_count_left = bid.count - bid_value_own_count
+        nb_opponents_dices = total_nb_dices - self.nb_dices
+
+        p_bid_valid = sum(
+            binom.pmf(k, nb_opponents_dices, 1 / 6)
+            for k in range(bid_value_count_left, nb_opponents_dices + 1)
+        )
+
+        return p_bid_valid
+
+    def challenge_last_bid(self, last_bid, total_nb_dices):
         """Potentially challenges the last bid made. If last bid is challenged,
         update the "challenged_by" argument to the player's name.
 
         Args:
-            last_bid (object Bid): Last bid
-            total_nb_dice (int): Total number of dices in the game
+            last_bid (Bid): Last bid
+            total_nb_dices (int): Total number of dices in the game
 
         Returns:
-            object Bid: Updated last bid
+            Bid: Updated last bid
         """
 
-        rand = random.uniform(0, 1)
-        p = 0.1
-        if (
-            (rand < p)
-            or (last_bid.count > total_nb_dice)
-            or not (1 <= last_bid.value <= 6)
-        ):
+        challenge_reason = None
+
+        # always challenge aberrant bids
+        if (last_bid.count > total_nb_dices) or not (1 <= last_bid.value <= 6):
             last_bid.challenged_by = self.name
+            challenge_reason = "abberrant bid"
+
+        # challenge when probability that last bid is valid is low
+        p_bid_valid = self.compute_bid_proba(last_bid, total_nb_dices)
+        if p_bid_valid < 0.3:
+            last_bid.challenged_by = self.name
+            challenge_reason = "low proba"
+
+        # small probability of bluffing
+        if p_bid_valid < 0.5:
+            p_bluff = 0.1
+            if random.uniform(0, 1) < p_bluff:
+                last_bid.challenged_by = self.name
+                challenge_reason = "bluff"
+
+        # Debugging logs
+        print(f"\n[DEBUG] {self.name} challenge decision")
+        print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
+        print(f"[DEBUG]    rolled {self.dices_values}")
+        print(f"[DEBUG]    last bid proba: {p_bid_valid:.6f}")
+        if challenge_reason:
+            print(f"[DEBUG]    challenge: {challenge_reason}")
+        else:
+            print("[DEBUG]    no challenge")
 
         return last_bid
 
-    # TODO improve AI
-    def place_bid(self, last_bid, total_nb_dice):
+    def generate_k_random_bid(self, k, last_bid, total_nb_dices):
+        """Given the last bid, generates k pseudo-random new bids that satisfy the game rules.
+
+        Args:
+            k (int): Number of bids to generate
+            last_bid (Bid): Last bid
+            total_nb_dices (int): Total number of dices in the game
+
+        Returns:
+            [Bid]: list of random valid bids
+        """
+
+        bids = []
+        for i in range(k):
+
+            if last_bid.value == 6:
+                count_i = random.randint(
+                    last_bid.count + 1, min(last_bid.count + 3, total_nb_dices)
+                )
+                value_i = last_bid.value
+
+            elif last_bid.value == total_nb_dices:
+                count_i = last_bid.count
+                value_i = random.randint(last_bid.value + 1, 6)
+
+            else:
+                count_i = random.randint(
+                    last_bid.count, min(last_bid.count + 3, total_nb_dices)
+                )
+                if count_i == last_bid.count:
+                    value_i = random.randint(last_bid.value + 1, 6)
+                else:
+                    p = random.uniform(0, 1)
+                    if p < 0.75:
+                        value_i = last_bid.value
+                    else:
+                        value_i = random.randint(last_bid.value + 1, 6)
+
+            bid_i = Bid(
+                player_name=self.name,
+                count=count_i,
+                value=value_i,
+                challenged_by=None,
+            )
+
+            bids.append(bid_i)
+
+        return bids
+
+    def place_bid(self, last_bid, total_nb_dices):
         """Places a bid
 
         Args:
-            last_bid (object Bid): Last bid
-            total_nb_dice (int): Total number of dices in the game
+            last_bid (Bid): Last bid
+            total_nb_dices (int): Total number of dices in the game
 
         Returns:
-            object Bid: Updated last bid
+            Bid: Updated last bid
         """
 
-        bid = Bid(
-            player_name=self.name,
-            count=0,
-            value=0,
-            challenged_by=None,
-        )
-
-        if last_bid.player_name is not None:
-            if last_bid.value == 6:
-                bid.count = last_bid.count + 1
-                bid.value = last_bid.value
-            else:
-                rand = random.uniform(0, 1)
-                p = 0.5
-                if rand < p:
-                    bid.count = last_bid.count + 1
-                    bid.value = last_bid.value
-                else:
-                    bid.count = last_bid.count
-                    bid.value = last_bid.value + 1
-            print(f"{self.name} raised the bid to {bid.count} {bid.value}")
-
+        first_bid = False
+        if last_bid.player_name is None:  # First bid
+            first_bid = True
+            value = random.choice(self.dices_values)
+            own_count = np.count_nonzero(self.dices_values == value)
+            count = own_count + random.randint(0, 2)
+            bid = Bid(
+                player_name=self.name, count=count, value=value, challenged_by=None
+            )
         else:
-            bid.count = random.randint(2, 4)
-            bid.value = random.randint(1, 6)
+            random_bids = self.generate_k_random_bid(10, last_bid, total_nb_dices)
+            random_bids_probas = [
+                self.compute_bid_proba(b, total_nb_dices) for b in random_bids
+            ]
+            most_probable_idx = max((v, i) for i, v in enumerate(random_bids_probas))[1]
+            bid = random_bids[most_probable_idx]
 
+        # Debugging logs
+        print(f"\n[DEBUG] {self.name} bidding decision")
+        if first_bid:
+            print(f"[DEBUG]    plays first")
+            print(f"[DEBUG]    rolled {self.dices_values}")
+        else:
+            print("[DEBUG]    raises bid")
+            print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
+            print(f"[DEBUG]    rolled {self.dices_values}")
+            for i in range(len(random_bids)):
+                print(
+                    f"[DEBUG]       random_bid_{i}: count={random_bids[i].count}, value={random_bids[i].value}, proba={random_bids_probas[i]:.4f}"
+                )
+
+        if first_bid:
             print(f"{self.name} placed a first bid of {bid.count} {bid.value}")
+        else:
+            print(f"{self.name} raised the bid to {bid.count} {bid.value}")
 
         time.sleep(0.5)
 
@@ -249,7 +345,7 @@ class Game:
         ]
         self.all_players = [self.human_player] + self.cpu_players
         self.nb_players = len(self.all_players)
-        self.total_nb_dice = nb_dices * self.nb_players
+        self.total_nb_dices = nb_dices * self.nb_players
         print(
             f"\nStarting a new game of {self.nb_players} players with {nb_dices} dices each."
         )
@@ -259,7 +355,7 @@ class Game:
         """Plays a round of bidding.
 
         Returns:
-            object Bid: Last bid made in the round
+            Bid: Last bid made in the round
         """
         bid_round = 0
         last_bid = Bid(player_name=None, count=0, value=0, challenged_by=None)
@@ -267,13 +363,13 @@ class Game:
         while True:
             for i, p in enumerate(self.all_players):
                 if (i == 0) and (bid_round == 0):
-                    last_bid = p.place_bid(last_bid, self.total_nb_dice)
+                    last_bid = p.place_bid(last_bid, self.total_nb_dices)
                 else:
-                    last_bid = p.challenge_last_bid(last_bid, self.total_nb_dice)
+                    last_bid = p.challenge_last_bid(last_bid, self.total_nb_dices)
                     if last_bid.challenged_by is not None:
                         break
                     else:
-                        last_bid = p.place_bid(last_bid, self.total_nb_dice)
+                        last_bid = p.place_bid(last_bid, self.total_nb_dices)
 
             if last_bid.challenged_by is not None:
                 break
@@ -294,13 +390,12 @@ class Game:
             object Player: Looser of the bidding round
         """
         all_dices = np.concatenate([p.dices_values for p in self.all_players], axis=0)
-        bid_value_count = np.count_nonzero(all_dices == bid.value)
+        true_count = np.count_nonzero(all_dices == bid.value)
+        bid_valid = true_count >= bid.count
 
         print("")
-        print(f"There are {bid_value_count} {bid.value}s on the table")
+        print(f"There are {true_count} {bid.value}s on the table")
         time.sleep(0.25)
-
-        bid_valid = bid_value_count == bid.count
         if bid_valid:
             print(
                 f"{bid.challenged_by} shouldn't have challenged {bid.player_name}'s bid!"
@@ -319,7 +414,7 @@ class Game:
     def play_round(self):
         """Plays a full round"""
         print(f"\n\n---------- Round {self.round} ----------")
-        print(f"\n{self.total_nb_dice} dices are still in the game.")
+        print(f"\n{self.total_nb_dices} dices are still in the game.")
         for p in self.all_players:
             print(f"   {p.name} has {p.nb_dices} left.")
         time.sleep(0.5)
@@ -368,7 +463,7 @@ class Game:
 
             # remove a dice from the looser
             looser.remove_dice()
-            self.total_nb_dice -= 1
+            self.total_nb_dices -= 1
 
             # end game if player has 0 dice
             if self.human_player.nb_dices == 0:
