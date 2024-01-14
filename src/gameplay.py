@@ -18,6 +18,7 @@ def ask_player_name():
     time.sleep(0.5)
     return player_name
 
+
 def ask_nb_cpus():
     """Asks the player how many computer-controlled opponents to plaz against.
 
@@ -38,6 +39,7 @@ def ask_nb_cpus():
             print("Invalid input. Please enter a number.")
     time.sleep(0.5)
     return nb_cpus
+
 
 class Bid:
     """Class implementing a bid."""
@@ -97,7 +99,6 @@ class Player:
 
 
 class HumanPlayer(Player):
-    
     def __init__(self, name, nb_dices):
         """
         Parameters
@@ -135,7 +136,7 @@ class HumanPlayer(Player):
             else:
                 print(f"   Invalid input: should be 'y' or 'n'")
         time.sleep(0.5)
-        return last_bid 
+        return last_bid
 
     def place_bid(self, last_bid, total_nb_dices):
         """Asks the player which bid they want to place.
@@ -284,7 +285,7 @@ class CpuPlayer(Player):
         Returns
         -------
         List[Bid]
-            List of random valid bids      
+            List of random valid bids
         """
 
         bids = []
