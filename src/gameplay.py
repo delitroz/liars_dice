@@ -8,20 +8,23 @@ from scipy.stats import binom
 def ask_player_name():
     """Asks the player for their name.
 
-    Returns:
-        str: Player's name
+    Returns
+    -------
+    str
+        Player's name
     """
     print("")
     player_name = input("What's your name? ")
     time.sleep(0.5)
     return player_name
 
-
 def ask_nb_cpus():
-    """Asks the player how many computer-controlled opponents to play against.
+    """Asks the player how many computer-controlled opponents to plaz against.
 
-    Returns:
-        int: Number of opponents
+    Returns
+    -------
+    int
+        Number of opponents
     """
     print("")
     while True:
@@ -36,16 +39,21 @@ def ask_nb_cpus():
     time.sleep(0.5)
     return nb_cpus
 
-
 class Bid:
-    def __init__(self, player_name, count, value, challenged_by):
-        """Constructor of the bid class.
+    """Class implementing a bid."""
 
-        Args:
-            player_name (str): Name of the player placing the bid
-            count (int): Count of a particular value on all dices
-            value (int): Dice value
-            challenged_by (str): Name of the player challenging this bid
+    def __init__(self, player_name, count, value, challenged_by):
+        """
+        Parameters
+        ----------
+        player_name : str
+            Name of the player placing the bid
+        count : int
+            Cont of a particular value on all dices
+        value : int
+            Dice value
+        challenged_by : str
+            Name of the plaxer challenging this bid
         """
         self.player_name = player_name
         self.count = count
@@ -54,12 +62,16 @@ class Bid:
 
 
 class Player:
-    def __init__(self, name, nb_dices):
-        """Constructor of the Player class.
+    """Class implementing a player."""
 
-        Args:
-            name (str): Player's name
-            nb_dices (int): Player's initial number of dices
+    def __init__(self, name, nb_dices):
+        """
+        Parameters
+        ----------
+        name : str
+            Player's name
+        nb_dices : int
+            Player's initial number of dices
         """
         self.name = name
         self.nb_dices = nb_dices
@@ -85,26 +97,33 @@ class Player:
 
 
 class HumanPlayer(Player):
+    
     def __init__(self, name, nb_dices):
-        """Constructor for the human player class
-
-        Args:
-            name (str): Player's name
-            nb_dices (int): Player's initial number of dices
+        """
+        Parameters
+        ----------
+        name : str
+            Player's name
+        nb_dices : int
+            Player's initial number of dices
         """
         super().__init__(name, nb_dices)
 
     def challenge_last_bid(self, last_bid, total_nb_dices):
-        """Asks the player if they want to challenge the last bid. If yes
-        update the last bid "challenged_by" argument to the player's name.
+        """Asks the player if they want to challenge the last bid. If yes, update
+        the last bid "challenged_by" argument to the player's name.
 
-        Args:
-            last_bid (Bid): Last bid
-            total_nb_dices (int): Always unused. Only for consitency with
-                CpuPlayer counterpart
+        Parameters
+        ----------
+        last_bid : Bid
+            Last bid
+        total_nb_dices : int
+            Always unused. Only for consistency with CpuPlayer counterpart.
 
-        Returns:
-            obect Bid: Updated last bid
+        Returns
+        -------
+        Bid
+            Updated last bid
         """
         while True:
             challenge = input("Challenge the last bid? (y/n): ")
@@ -116,21 +135,28 @@ class HumanPlayer(Player):
             else:
                 print(f"   Invalid input: should be 'y' or 'n'")
         time.sleep(0.5)
-        return last_bid
+        return last_bid 
 
     def place_bid(self, last_bid, total_nb_dices):
-        """Asks the player which bid they want to place. Update the last bid
-        accordingly.
+        """Asks the player which bid they want to place.
 
-        Args:
-            last_bid (Bid): Last bid
-            total_nb_dices (int): Always unused. Only for consitency with
-                CpuPlayer counterpart
+        Parameters
+        ----------
+        last_bid : Bid
+            Last Bid
+        total_nb_dices : int
+            Always unused. Only for consistency with CpuPlayer counterpart.
 
-        Returns:
-            Bid: Updated Bid
+        Returns
+        -------
+        _type_
+            _description_
+
+        Raises
+        ------
+        the
+            _description_
         """
-
         bid = Bid(player_name=self.name, count=0, value=0, challenged_by=None)
 
         while True:
@@ -156,21 +182,33 @@ class HumanPlayer(Player):
 
 
 class CpuPlayer(Player):
-    def __init__(self, name, nb_dices):
-        """Constructor for the cpu player class
+    """Class implementing a computer-controlled player"""
 
-        Args:
-            name (str): Player's name
-            nb_dices (int): Player's initial number of dices
+    def __init__(self, name, nb_dices):
+        """
+        Parameters
+        ----------
+        name : str
+            Player's name
+        nb_dices : int
+            Player's initial number of dices
         """
         super().__init__(name, nb_dices)
 
     def compute_bid_proba(self, bid, total_nb_dices):
-        """Compute the probability that a bid is valid.
+        """Compute the probility that a bid is valid.
 
-        Args:
-            bid (Bid): Bid
-            total_nb_dices (int): Total number of dices in the game
+        Parameters
+        ----------
+        bid : Bid
+            Bid
+        total_nb_dices : int
+            Total number of dices in the game
+
+        Returns
+        -------
+        float
+            Probability that the bid is valid
         """
         bid_value_own_count = np.count_nonzero(self.dices_values == bid.value)
         bid_value_count_left = bid.count - bid_value_own_count
@@ -187,14 +225,18 @@ class CpuPlayer(Player):
         """Potentially challenges the last bid made. If last bid is challenged,
         update the "challenged_by" argument to the player's name.
 
-        Args:
-            last_bid (Bid): Last bid
-            total_nb_dices (int): Total number of dices in the game
+        Parameters
+        ----------
+        last_bid : Bid
+            Last bid
+        total_nb_dices : int
+            Total number of dices in the game
 
-        Returns:
-            Bid: Updated last bid
+        Returns
+        -------
+        Bid
+            Updated last bid
         """
-
         challenge_reason = None
 
         # always challenge aberrant bids
@@ -215,28 +257,34 @@ class CpuPlayer(Player):
                 last_bid.challenged_by = self.name
                 challenge_reason = "bluff"
 
-        # Debugging logs
-        print(f"\n[DEBUG] {self.name} challenge decision")
-        print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
-        print(f"[DEBUG]    rolled {self.dices_values}")
-        print(f"[DEBUG]    last bid proba: {p_bid_valid:.6f}")
-        if challenge_reason:
-            print(f"[DEBUG]    challenge: {challenge_reason}")
-        else:
-            print("[DEBUG]    no challenge")
+        # # Debugging logs
+        # print(f"\n[DEBUG] {self.name} challenge decision")
+        # print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
+        # print(f"[DEBUG]    rolled {self.dices_values}")
+        # print(f"[DEBUG]    last bid proba: {p_bid_valid:.6f}")
+        # if challenge_reason:
+        #     print(f"[DEBUG]    challenge: {challenge_reason}")
+        # else:
+        #     print("[DEBUG]    no challenge")
 
         return last_bid
 
     def generate_k_random_bid(self, k, last_bid, total_nb_dices):
         """Given the last bid, generates k pseudo-random new bids that satisfy the game rules.
 
-        Args:
-            k (int): Number of bids to generate
-            last_bid (Bid): Last bid
-            total_nb_dices (int): Total number of dices in the game
+        Parameters
+        ----------
+        k : int
+            Number of bids to generate
+        last_bid : Bid
+            Last Bid
+        total_nb_dices : int
+            Total number of dices in the game
 
-        Returns:
-            [Bid]: list of random valid bids
+        Returns
+        -------
+        List[Bid]
+            List of random valid bids      
         """
 
         bids = []
@@ -279,14 +327,18 @@ class CpuPlayer(Player):
     def place_bid(self, last_bid, total_nb_dices):
         """Places a bid
 
-        Args:
-            last_bid (Bid): Last bid
-            total_nb_dices (int): Total number of dices in the game
+        Parameters
+        ----------
+        last_bid : Bid
+            Last bid
+        total_nb_dices : int
+            Total number of dices in the game
 
-        Returns:
-            Bid: Updated last bid
+        Returns
+        -------
+        Bid
+            Bid
         """
-
         first_bid = False
         if last_bid.player_name is None:  # First bid
             first_bid = True
@@ -304,19 +356,19 @@ class CpuPlayer(Player):
             most_probable_idx = max((v, i) for i, v in enumerate(random_bids_probas))[1]
             bid = random_bids[most_probable_idx]
 
-        # Debugging logs
-        print(f"\n[DEBUG] {self.name} bidding decision")
-        if first_bid:
-            print(f"[DEBUG]    plays first")
-            print(f"[DEBUG]    rolled {self.dices_values}")
-        else:
-            print("[DEBUG]    raises bid")
-            print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
-            print(f"[DEBUG]    rolled {self.dices_values}")
-            for i in range(len(random_bids)):
-                print(
-                    f"[DEBUG]       random_bid_{i}: count={random_bids[i].count}, value={random_bids[i].value}, proba={random_bids_probas[i]:.4f}"
-                )
+        # # Debugging logs
+        # print(f"\n[DEBUG] {self.name} bidding decision")
+        # if first_bid:
+        #     print(f"[DEBUG]    plays first")
+        #     print(f"[DEBUG]    rolled {self.dices_values}")
+        # else:
+        #     print("[DEBUG]    raises bid")
+        #     print(f"[DEBUG]    last bid: {last_bid.count} {last_bid.value}")
+        #     print(f"[DEBUG]    rolled {self.dices_values}")
+        #     for i in range(len(random_bids)):
+        #         print(
+        #             f"[DEBUG]       random_bid_{i}: count={random_bids[i].count}, value={random_bids[i].value}, proba={random_bids_probas[i]:.4f}"
+        #         )
 
         if first_bid:
             print(f"{self.name} placed a first bid of {bid.count} {bid.value}")
@@ -329,15 +381,19 @@ class CpuPlayer(Player):
 
 
 class Game:
+    """Class implementing a game"""
+
     def __init__(self, player_name, nb_cpus, nb_dices):
-        """Constructor of the Game class
-
-        Args:
-            player_name (str): Player's name
-            nb_cpus (_type_): Number of computer-controlled oponents
-            nb_dices (_type_): Initial number of dices for each player
         """
-
+        Parameters
+        ----------
+        player_name : str
+            Player's name
+        nb_cpus : int
+            Number of computer-controlled opponents
+        nb_dices : int
+            Initial number of dices for each player
+        """
         self.round = 1
         self.human_player = HumanPlayer(name=player_name, nb_dices=nb_dices)
         self.cpu_players = [
@@ -354,8 +410,10 @@ class Game:
     def play_bid_round(self):
         """Plays a round of bidding.
 
-        Returns:
-            Bid: Last bid made in the round
+        Returns
+        -------
+        Bid
+            Last bid made in the round
         """
         bid_round = 0
         last_bid = Bid(player_name=None, count=0, value=0, challenged_by=None)
@@ -383,11 +441,15 @@ class Game:
         is valid, the looser is the player that challenged it, if not, the looser
         is the player that placed that bid
 
-        Args:
-            bid (oject Bid): Last bid of the bidding round
+        Parameters
+        ----------
+        bid : Bid
+            Last bid of the bidding round
 
-        Returns:
-            object Player: Looser of the bidding round
+        Returns
+        -------
+        Player
+            Looser of the bidding round
         """
         all_dices = np.concatenate([p.dices_values for p in self.all_players], axis=0)
         true_count = np.count_nonzero(all_dices == bid.value)
