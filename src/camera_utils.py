@@ -4,11 +4,15 @@ import cv2
 def check_cameras(max_cameras_to_check=5):
     """Checks available cameras
 
-    Args:
-        max_cameras_to_check (int, optional): Maximun number of ports to check. Defaults to 5.
+    Parameters
+    ----------
+    max_cameras_to_check : int, optional
+        Maximum number of ports to check, by default 5
 
-    Returns:
-        list[int]: Indices of available cameras
+    Returns
+    -------
+    List[int]
+        Indices of available cameras
     """
     print("\nLooking for available cameras...")
     available_cameras = []
@@ -29,11 +33,13 @@ def check_cameras(max_cameras_to_check=5):
 
 
 def select_camera():
-    """Asks the user which camera they want to use. When a camera index is chosen, displays
-    the corresponding feed and ask for confirmation.
+    """Asks the user which camera they want to use. When a camera index is
+    chosen, displays the corresponding feed and asks for confirmation.
 
-    Returns:
-        int: Selected camera index
+    Returns
+    -------
+    int
+        Selected camera index
     """
     available_cameras = check_cameras()
     assert available_cameras, "ERROR: no camera available"
